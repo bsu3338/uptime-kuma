@@ -602,11 +602,23 @@ class Monitor extends BeanModel {
 
                         let result = await expression.evaluate(data);
 
-                        if (result.toString() === this.expectedValue) {
-                            bean.msg += ", expected value is found";
-                            bean.status = UP;
+                        if (this.expectedValue.includes(':')) {
+                            let [lowValue, highValue] = this.expectedValue.split(':').map(Number);
+                            let resultNumber = Number(result);
+
+                            if (resultNumber >= lowValue && resultNumber <= highValue) {
+                                bean.msg += ", expected value is found within range";
+                                bean.status = UP;
+                            } else {
+                                throw new Error(`${bean.msg}, but value is not within the expected range, value was: [${result}], expected range: [${lowValue}-${highValue}]`);
+                            }
                         } else {
-                            throw new Error(bean.msg + ", but value is not equal to expected value, value was: [" + result + "]");
+                            if (result.toString() === this.expectedValue) {
+                                bean.msg += ", expected value is found";
+                                bean.status = UP;
+                            } else {
+                                throw new Error(bean.msg + ", but value is not equal to expected value, value was: [" + result + "]");
+                            }
                         }
                     }
 
